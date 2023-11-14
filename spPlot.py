@@ -1,3 +1,4 @@
+import sys
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -30,7 +31,16 @@ def format_sci_notation(x, pos):
 
 # Function to open a CSV file using a dialog
 def open_csv_file():
-    file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
+    global startup
+    #if startup:
+    if startup and len(sys.argv)>=1:
+        try:
+            file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")],initialdir=str(sys.argv[1]))
+        except:
+            print("Invalid argument. Please pass a valid filepath as argument")
+        startup = False
+    else:
+        file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
     if file_path:
         try:
             if skip_rows_toggle.get():
@@ -134,7 +144,8 @@ def plot_histogram(data, column_name, initial_params, plot_title, x_label, y_lab
         curve_x_vals = np.append(curve_x_vals,np.linspace(x_min.get(),x_max.get(),num=1000))
         curve_x_vals.sort()
 
-    sigma1_field.config(text = str(np.std(data[column_name])))
+    # sigma1_field.config(text = str(np.std(np.exp(data[column_name]))))
+    sigma_field.config(text = "%.2f" % np.exp(data[column_name]))
     # Clear the previous plot
     ax.clear()
     ax1.clear()
@@ -596,6 +607,7 @@ def toggle_fit():
 
 
 # Create variables
+startup = True
 data = None
 dt_data = None
 filename = StringVar()
@@ -632,7 +644,6 @@ median_legend=StringVar()
 median1_legend=StringVar()
 median2_legend=StringVar()
 background_legend=StringVar()
-sigma1 = StringVar()
 
 choose_file_button = tk.Button(root, text="Choose CSV File", command=choose_csv_file)
 skiprows_checkbox = tk.Checkbutton(root, text="Skip first Rows", variable=skip_rows_toggle, onvalue=True, offvalue=False)
@@ -772,8 +783,8 @@ background_label = tk.Entry(root, textvariable=background_legend)
 
 reset_labels_button = tk.Button(root, text="Reset Labels", command=reset_labels)
 
-sigma1_label = tk.Label(root, text="$\sigma = $")
-sigma1_field = tk.Label(root)
+sigma_label = tk.Label(root, text="\u03c3= ")
+sigma_field = tk.Label(root)
 
 # Place elements in the window
 choose_file_button.grid(row=0,column=0)
@@ -810,8 +821,8 @@ bin_width2_label.grid(column=10,row=9)
 bin_width2_entry.grid(column=10,row=10)
 plot_me_button.grid(row=11,column=10)
 save_me_button.grid(row=13,column=10)
-sigma1_label.grid(row=14,column=10)
-sigma1_field.grid(row=15,column=10)
+sigma_label.grid(row=18,column=10)
+sigma_field.grid(row=18,column=11)
 
 x_min_label.grid(column=3,row=26)
 x_min_entry.grid(column=4,row=26)
