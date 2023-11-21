@@ -145,7 +145,7 @@ def plot_histogram(data, column_name, initial_params, plot_title, x_label, y_lab
         curve_x_vals.sort()
 
     # sigma1_field.config(text = str(np.std(np.exp(data[column_name]))))
-    sigma_field.config(text = "%.2f" % np.exp(data[column_name]))
+    sigma_field.config(text = "\u03c3 = " "%.2f" % np.exp(data[column_name]))
     # Clear the previous plot
     ax.clear()
     ax1.clear()
@@ -215,7 +215,7 @@ def plot_histogram(data, column_name, initial_params, plot_title, x_label, y_lab
             # could_not_fit_label.grid(column=10,row=12)
     elif plot_median_toggle.get():
         # mean = np.average(bin_centers,weights=hist)
-        mean = data[column_name].mean()
+        mean = data[column_name].average()
         ax.axvline(mean,color="lime", linewidth=2, label="\u03bc = " + '%.2E' % mean, zorder=7)
         ax1.axvline(mean,color="lime", linewidth=2, label="\u03bc = " + '%.2E' % mean, zorder=7)
 

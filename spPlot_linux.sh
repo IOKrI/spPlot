@@ -1,3 +1,3 @@
 #!/bin/bash
-spdir=/home/joshua/software/spPlot
+spdir=$PWD
 python $spdir/spPlot.py $1
