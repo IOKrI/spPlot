@@ -1,14 +1,23 @@
 import sys
-import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
-from scipy.optimize import curve_fit, OptimizeWarning
-from scipy.stats import poisson
-from matplotlib.ticker import FuncFormatter
+# import pandas as pd
+# import numpy as np
+# import matplotlib.pyplot as plt
+# from scipy.optimize import curve_fit, OptimizeWarning
+# from scipy.stats import poisson
+# from matplotlib.ticker import FuncFormatter
+# from matplotlib.figure import Figure
+# from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
+import externals.pandas.pandas as pd
+from externals.matplotlib.lib.matplotlib import pyplot as plt
+import externals.numpy.numpy as np
+from externals.scipy.scipy.optimize import curve_fit, OptimizeWarning
+from externals.scipy.scipy.stats import poisson
+from externals.matplotlib.lib.matplotlib.ticker import FuncFormatter
 import tkinter as tk
 from tkinter import filedialog, StringVar, OptionMenu, Entry, Listbox, BooleanVar
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from externals.matplotlib.lib.matplotlib.figure import Figure
+from externals.matplotlib.lib.matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import warnings
 
 warnings.simplefilter("error",OptimizeWarning)
@@ -145,7 +154,7 @@ def plot_histogram(data, column_name, initial_params, plot_title, x_label, y_lab
         curve_x_vals.sort()
 
     # sigma1_field.config(text = str(np.std(np.exp(data[column_name]))))
-    sigma_field.config(text = "%.2f" % np.exp(data[column_name]))
+    sigma_field.config(text = "\u03c3 = "+"%.2f" % np.exp(data[column_name]))
     # Clear the previous plot
     ax.clear()
     ax1.clear()
@@ -215,7 +224,7 @@ def plot_histogram(data, column_name, initial_params, plot_title, x_label, y_lab
             # could_not_fit_label.grid(column=10,row=12)
     elif plot_median_toggle.get():
         # mean = np.average(bin_centers,weights=hist)
-        mean = data[column_name].mean()
+        mean = data[column_name].average()
         ax.axvline(mean,color="lime", linewidth=2, label="\u03bc = " + '%.2E' % mean, zorder=7)
         ax1.axvline(mean,color="lime", linewidth=2, label="\u03bc = " + '%.2E' % mean, zorder=7)
 

@@ -1,0 +1,12 @@
+[submodule "externals/matplotlib"]
+	path = externals/matplotlib
+	url = https://github.com/matplotlib/matplotlib
+[submodule "externals/pandas"]
+	path = externals/pandas
+	url = https://github.com/pandas-dev/pandas
+[submodule "externals/numpy"]
+	path = externals/numpy
+	url = https://github.com/numpy/numpy
+[submodule "externals/scipy"]
+	path = externals/scipy
+	url = https://github.com/scipy/scipy
