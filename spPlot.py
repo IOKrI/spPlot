@@ -31,11 +31,11 @@ def format_sci_notation(x, pos):
 
 # Function to open a CSV file using a dialog
 def open_csv_file():
-    global startup
+    global startup # set initial folder to the one passed to spPlot as an argument if given
     #if startup:
-    if startup and len(sys.argv)>=1:
+    if startup and len(sys.argv)>=2:
         try:
-            file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")],initialdir=str(sys.argv[1]))
+            file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")],initialdir=str(sys.argv[2]))
         except:
             print("Invalid argument. Please pass a valid filepath as argument")
         startup = False
@@ -99,7 +99,6 @@ def estimate_initial_parameters(data):
     return mu_estimate, sigma_estimate
 
 # Function to plot a histogram with logarithmic bin sizes and x-scale
-# def plot_histogram(data, column_name, initial_params, plot_title, x_label, y_label, save, num_peaks, bin_width):
 def plot_histogram(data, column_name, initial_params, plot_title, x_label, y_label, save, num_peaks, bin_width, column_name_bg):
     plt.close()
     mean = 0.0
@@ -128,9 +127,11 @@ def plot_histogram(data, column_name, initial_params, plot_title, x_label, y_lab
         curve_x_vals = np.logspace(log_min, log_max, 1000)
     else:
         if plot_background_toggle.get():
-            bin_edges = np.linspace(min(data[column_name].min(),data[column_name_bg].min()),data[column_name].max(),num=int((data[column_name].max()-min(data[column_name].min(),data[column_name_bg].min()))/bin_width))
+            num_bins = int((data[column_name].max()-min(data[column_name].min(),data[column_name_bg].min()))/bin_width)
+            bin_edges = np.linspace(min(data[column_name].min(),data[column_name_bg].min()),data[column_name].max(),num=num_bins)
         else:
-            bin_edges = np.linspace(data[column_name].min(),data[column_name].max(),num=int((data[column_name].max()-data[column_name].min())/bin_width))
+            num_bins = int((data[column_name].max()-data[column_name].min())/bin_width)
+            bin_edges = np.linspace(data[column_name].min(),data[column_name].max(),num=num_bins)
         if(len(bin_edges) > 10000):
             errormsg_window("Number of Bins (" + num_bins + ") is greater than 10000, please change the bin_width!")
             return
@@ -144,8 +145,7 @@ def plot_histogram(data, column_name, initial_params, plot_title, x_label, y_lab
         curve_x_vals = np.append(curve_x_vals,np.linspace(x_min.get(),x_max.get(),num=1000))
         curve_x_vals.sort()
 
-    # sigma1_field.config(text = str(np.std(np.exp(data[column_name]))))
-    sigma_field.config(text = "\u03c3 = " "%.2f" % np.exp(data[column_name]))
+    sigma_label.set("\u03c3 = " + "%.2f" % data[column_name].std())
     # Clear the previous plot
     ax.clear()
     ax1.clear()
@@ -192,7 +192,6 @@ def plot_histogram(data, column_name, initial_params, plot_title, x_label, y_lab
                     ax1.plot(curve_x_vals, fitted_curve, 'r-', label="Fitted Lognormal Distribution", zorder=5)
                     ax2.plot(curve_x_vals, fitted_curve, 'r-', label="Fitted Lognormal Distribution", zorder=5)
             if plot_median_toggle.get():
-                # mean = np.average(bin_centers,weights=hist)
                 mean = data[column_name].mean()
                 if num_peaks == 2:
                     med_label = "$\mu_{total}$ = "
@@ -210,12 +209,9 @@ def plot_histogram(data, column_name, initial_params, plot_title, x_label, y_lab
                     ax1.axvline(np.exp(params[3]),color="blueviolet", linewidth=2, label="$\mu_2$ = " + '%.2f' % np.exp(params[3]), zorder=9)
                 init_params2_entry.set('%.2f' % params[3] + "," + '%.2f' % params[4] + "," + '%.2f' % params[5])
         except (RuntimeError, OptimizeWarning) as error:
-            errormsg_window("Curve fit unsuccessful.\n Try varying the initial parameters")
-            # could_not_fit_label.grid(column=0,row=13)
-            # could_not_fit_label.grid(column=10,row=12)
+            errormsg_window("Curve fit unsuccessful.\n Try varying/resetting the initial parameters")
     elif plot_median_toggle.get():
-        # mean = np.average(bin_centers,weights=hist)
-        mean = data[column_name].average()
+        mean = data[column_name].mean()
         ax.axvline(mean,color="lime", linewidth=2, label="\u03bc = " + '%.2E' % mean, zorder=7)
         ax1.axvline(mean,color="lime", linewidth=2, label="\u03bc = " + '%.2E' % mean, zorder=7)
 
@@ -260,10 +256,8 @@ def plot_histogram(data, column_name, initial_params, plot_title, x_label, y_lab
                   linestyle="none", color='k', mec='k', mew=1, clip_on=False)
     ax2.plot([0, 1], [0, 0], transform=ax2.transAxes, **kwargs)
     ax1.plot([0, 1], [1, 1], transform=ax1.transAxes, **kwargs)
-    #
-    # legend_handles = []
+    # set custom legend
     handles, labels = ax.get_legend_handles_labels()
-    # legend_labels = []
     index = 0
     if plot_curve_toggle.get():
         if curve_legend.get()!='' and fit.get():
@@ -383,68 +377,25 @@ def set_y2_lims():
     y2_min.set(np.nan)
     y2_max.set(np.nan)
 
-# Function to plot the histogram
-def plot_selected_column():
-    global mass
-    mass = False
-    column_name = selected_column.get()
-    if data is not None and column_name:
-        initial_params_list = [float(param) for param in init_params_entry.get().split(',')]
-        if(num_peaks.get()==2):
-            initial_params_list.extend([float(param) for param in init_params2_entry.get().split(',')])
-
-        plot_histogram(
-            data,
-            column_name,
-            initial_params_list,
-            plot_title_entry.get(),
-            x_label_entry.get(),
-            y_label_entry.get(),
-            False,
-            num_peaks.get(),
-            bin_width1.get(),
-            background_column.get()
-        )
-
-# Function to save the histogram
-def save_selected_column():
-    column_name = selected_column.get()
-    if data is not None and column_name:
-        initial_params_list = [float(param) for param in init_params_entry.get().split(',')]
-        if(num_peaks.get()==2):
-            initial_params_list.extend([float(param) for param in init_params2_entry.get().split(',')])
-        plot_histogram(
-            data,
-            column_name,
-            initial_params_list,
-            plot_title_entry.get(),
-            x_label_entry.get(),
-            y_label_entry.get(),
-            True,
-            num_peaks.get(),
-            bin_width1.get(),
-            background_column.get()
-        )
-
-def calculate_me(save):
+def process_column(save):
     global factor
     global mass
-    mass = True
     column_name = selected_column.get()
     column_name_bg = background_column.get()
     data_set = data.copy()
     if data_set is not None and column_name:
-        pitch_value = float(pitch_entry.get())
-        flow_value = float(flow_entry.get())
-        dwelltime_value = float(dwelltime_entry.get())
-        transport_value = float(transport_entry.get())
-        data_set[column_name] = 5/3 * data_set[column_name] / (pitch_value * flow_value * dwelltime_value * transport_value)
-        if plot_background_toggle.get():
-            data_set[column_name_bg] = 5/3 * data_set[column_name_bg] / (pitch_value * flow_value * dwelltime_value * transport_value)
-        factor = 5/3 / (pitch_value * flow_value * dwelltime_value * transport_value)
-
-        # Clear the previous plot
-        ax.clear()
+        if mass: # Determines if mass/event or cts/event is to be plotted
+            pitch_value = float(pitch_entry.get()) # read the given values
+            flow_value = float(flow_entry.get())
+            dwelltime_value = float(dwelltime_entry.get())
+            transport_value = float(transport_entry.get())
+            data_set[column_name] = 5/3 * data_set[column_name] / (pitch_value * flow_value * dwelltime_value * transport_value) # calculate the mass / event from the cts / event for the cell events
+            if plot_background_toggle.get():
+                data_set[column_name_bg] = 5/3 * data_set[column_name_bg] / (pitch_value * flow_value * dwelltime_value * transport_value) # calculate the mass / event from the cts / event for the background
+            factor = 5/3 / (pitch_value * flow_value * dwelltime_value * transport_value)
+            bin_width = bin_width2.get()
+        else:
+            bin_width = bin_width1.get()
 
         # Convert the comma-separated initial parameters to a list
         initial_params_list = [float(param) for param in init_params_entry.get().split(',')]
@@ -461,17 +412,37 @@ def calculate_me(save):
             y_label_entry.get(),
             save,
             num_peaks.get(),
-            bin_width2.get(),
+            bin_width,
             column_name_bg
         )
 
+def plot_cts():
+    global mass
+    mass = False
+    if x_label.get() == '' or x_label.get() == "Mass / Event / fg":
+        x_label.set("cts / Event")
+    process_column(False)
+
+def save_cts():
+    global mass
+    mass = False
+    if x_label.get() == '' or x_label.get() == "Mass / Event / fg":
+        x_label.set("cts / Event")
+    process_column(True)
+
 def plot_me():
-    if x_label.get() =='':
+    global mass
+    mass = True
+    if x_label.get() =='' or x_label.get() == "cts / Event":
         x_label.set("Mass / Event / fg")
-    calculate_me(False)
+    process_column(False)
 
 def save_me():
-    calculate_me(True)
+    global mass
+    mass = True
+    if x_label.get() =='' or x_label.get() == "cts / Event":
+        x_label.set("Mass / Event / fg")
+    process_column(True)
 
 def toggle_bin_width():
     global bw1_old
@@ -644,11 +615,12 @@ median_legend=StringVar()
 median1_legend=StringVar()
 median2_legend=StringVar()
 background_legend=StringVar()
+sigma_label=StringVar(value="\u03c3 = ")
 
 choose_file_button = tk.Button(root, text="Choose CSV File", command=choose_csv_file)
 skiprows_checkbox = tk.Checkbutton(root, text="Skip first Rows", variable=skip_rows_toggle, onvalue=True, offvalue=False)
-plot_button = tk.Button(root, text="Plot Raw Data", command=plot_selected_column)
-save_button = tk.Button(root, text="Save Raw Data", command=save_selected_column)
+plot_button = tk.Button(root, text="Plot Raw Data", command=plot_cts)
+save_button = tk.Button(root, text="Save Raw Data", command=save_cts)
 close_button = tk.Button(root, text="Exit", command=root.destroy)
 
 second_log = tk.Checkbutton(root, text="Second Distribution", variable=num_peaks, onvalue=2, offvalue=1, command=toggle_params)
@@ -698,7 +670,6 @@ canvas = FigureCanvasTkAgg(fig, master=root)
 canvas.get_tk_widget().grid(row=0,column=1,rowspan=25, columnspan=9)
 
 canvas2 = FigureCanvasTkAgg(fig2, master=root)
-# canvas2.get_tk_widget().grid(row=0,column=1,rowspan=25, columnspan=9)
 
 #Dwelltime entry
 choose_dt_file_button = tk.Button(root, text="Choose Dwelltime file", command=choose_dt_file)
@@ -783,8 +754,8 @@ background_label = tk.Entry(root, textvariable=background_legend)
 
 reset_labels_button = tk.Button(root, text="Reset Labels", command=reset_labels)
 
-sigma_label = tk.Label(root, text="\u03c3= ")
-sigma_field = tk.Label(root)
+# sigma_label = tk.Label(root, text="\u03c3= ")
+sigma_field = tk.Entry(root, textvariable=sigma_label, state="readonly")
 
 # Place elements in the window
 choose_file_button.grid(row=0,column=0)
@@ -821,8 +792,8 @@ bin_width2_label.grid(column=10,row=9)
 bin_width2_entry.grid(column=10,row=10)
 plot_me_button.grid(row=11,column=10)
 save_me_button.grid(row=13,column=10)
-sigma_label.grid(row=18,column=10)
-sigma_field.grid(row=18,column=11)
+# sigma_label.grid(row=18,column=10)
+sigma_field.grid(row=18,column=10)
 
 x_min_label.grid(column=3,row=26)
 x_min_entry.grid(column=4,row=26)
