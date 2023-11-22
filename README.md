@@ -12,3 +12,8 @@ The Program then can be executed by running the command "spPlot" from a terminal
 On Windows:
 
 The current best solution is to copy the spPlot.py into the directory you want to work in and run it from there.
+
+WIP:
+- GUI overhaul
+- history of saved images
+- history of opened directories
