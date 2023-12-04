@@ -145,7 +145,7 @@ def plot_histogram(data, column_name, initial_params, plot_title, x_label, y_lab
         curve_x_vals.sort()
 
     # sigma1_field.config(text = str(np.std(np.exp(data[column_name]))))
-    sigma_field.config(text = "%.2f" % np.exp(data[column_name]))
+    sigma_label.config(text = " \u03c3= "+"%.2f" % np.std(data[column_name]))
     # Clear the previous plot
     ax.clear()
     ax1.clear()
@@ -193,7 +193,7 @@ def plot_histogram(data, column_name, initial_params, plot_title, x_label, y_lab
                     ax2.plot(curve_x_vals, fitted_curve, 'r-', label="Fitted Lognormal Distribution", zorder=5)
             if plot_median_toggle.get():
                 # mean = np.average(bin_centers,weights=hist)
-                mean = data[column_name].mean()
+                mean = data[column_name].average()
                 if num_peaks == 2:
                     med_label = "$\mu_{total}$ = "
                 else:
@@ -606,10 +606,33 @@ def toggle_fit():
         plot_median2_toggle.set(False)
 
 
+def add_history_entry():
+    global filename
+    entry = [filename.get,plot_title.get(),x_label.get(),y_label.get(),selected_column.get(),background_column.get(),fit.get(),num_peaks.get(),init_params_entry.get(),init_params2_entry.get(),skip_rows_toggle.get(),broken_scale_toggle.get(),x_min.get(),x_max.get(),y_min.get(),y_max.get(),y2_min.get(),y2_max.get(),bin_width1.get(),bin_width2.get(),dwelltime.get(),transport_entry.get(),flow_entry.get(),pitch_entry.get()]
+    if history['filename'].query(filename.get()):
+        return
+    else:
+        history.add(entry)
+
+
+def load_history(path):
+    global history
+    try:
+        history = pd.read_csv(str(path + ".history"))
+    except:
+        history = pd.DataFrame(columns=['filename','plot_title','x_label','y_label','selected_column','background_column','fit','second_fit','fit1_param','fit2_param','skip_rows','broken_scale','x_min','x_max','y_min','y_max','y2_min','y2_max','binwidth1','binwidth2','dwelltime','transeff','v_flow','calpitch'])
+
+
+def write_history(path):
+    global history
+    history.to_csv(str(path + ".history"))
+
+
 # Create variables
 startup = True
 data = None
 dt_data = None
+history = None
 filename = StringVar()
 plot_title = StringVar()
 log_scale_toggle = BooleanVar()
