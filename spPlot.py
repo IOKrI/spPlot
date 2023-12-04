@@ -582,10 +582,33 @@ def toggle_fit():
 def show_info():
     errormsg_window("spPlot v0.5\nFor more information about this project,\nvisit https://github.com/IOKrI/spPlot")
 
+def add_history_entry():
+    global filename
+    entry = [filename.get,plot_title.get(),x_label.get(),y_label.get(),selected_column.get(),background_column.get(),fit.get(),num_peaks.get(),init_params_entry.get(),init_params2_entry.get(),skip_rows_toggle.get(),broken_scale_toggle.get(),x_min.get(),x_max.get(),y_min.get(),y_max.get(),y2_min.get(),y2_max.get(),bin_width1.get(),bin_width2.get(),dwelltime.get(),transport_entry.get(),flow_entry.get(),pitch_entry.get()]
+    if history['filename'].query(filename.get()):
+        return
+    else:
+        history.add(entry)
+
+
+def load_history(path):
+    global history
+    try:
+        history = pd.read_csv(str(path + ".history"))
+    except:
+        history = pd.DataFrame(columns=['filename','plot_title','x_label','y_label','selected_column','background_column','fit','second_fit','fit1_param','fit2_param','skip_rows','broken_scale','x_min','x_max','y_min','y_max','y2_min','y2_max','binwidth1','binwidth2','dwelltime','transeff','v_flow','calpitch'])
+
+
+def write_history(path):
+    global history
+    history.to_csv(str(path + ".history"))
+
+
 # Create variables
 startup = True
 data = None
 dt_data = None
+history = None
 filename = StringVar()
 plot_title = StringVar()
 log_scale_toggle = BooleanVar()
