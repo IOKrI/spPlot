@@ -32,13 +32,17 @@ def format_sci_notation(x, pos):
 # Function to open a CSV file using a dialog
 def open_csv_file():
     global startup # set initial folder to the one passed to spPlot as an argument if given
+    global ws_path
+    global file_path
     #if startup:
-    if startup and len(sys.argv)>=2:
+    if startup and len(sys.argv)>=3:
         try:
-            file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")],initialdir=str(sys.argv[2]))
+            file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")],initialdir=str(sys.argv[3]))
         except:
             print("Invalid argument. Please pass a valid filepath as argument")
         startup = False
+    elif ws_path:
+        file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")],initialdir=ws_path)
     else:
         file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
     if file_path:
@@ -436,6 +440,7 @@ def plot_me():
     if x_label.get() =='' or x_label.get() == "cts / Event":
         x_label.set("Mass / Event / fg")
     process_column(False)
+    write_history()
 
 def save_me():
     global mass
@@ -443,6 +448,7 @@ def save_me():
     if x_label.get() =='' or x_label.get() == "cts / Event":
         x_label.set("Mass / Event / fg")
     process_column(True)
+    write_history()
 
 def toggle_bin_width():
     global bw1_old
@@ -601,7 +607,47 @@ def load_history(path):
 
 def write_history(path):
     global history
+    global workspaces
     history.to_csv(str(path + ".history"))
+    workspaces.to_csv(str(sys.argv[2] + ".workspaces"))
+
+def choose_file_path():
+    global ws_path
+    tmp = filedialog.askdirectory()
+    if tmp != "" and tmp is not None:
+        print(tmp)
+        ws_path = tmp
+        update_ws_paths()
+
+def load_ws():
+    recent_file_paths.delete(0, 'end')
+    global workspaces
+    if workspaces is None:
+        try:
+            workspaces = pd.read_csv(str(sys.argv[1] + "/.workspaces"))
+        except:
+            workspaces = pd.DataFrame({'path':[]})
+            workspaces.to_csv(str(sys.argv[1] + "/.workspaces"),index=False)
+    for ind in workspaces.index:
+        recent_file_paths.add_command(label=workspaces['path'][ind], command=lambda p=workspaces['path'][ind]:set_dir_path(p))
+
+def set_dir_path(ws):
+    print(ws)
+    global ws_path
+    global startup
+    startup = False
+    ws_path = ws
+    update_ws_paths()
+
+def update_ws_paths():
+    global workspaces
+    global ws_path
+    if workspaces["path"].eq(ws_path).any():
+        workspaces = workspaces[workspaces["path"] != ws_path]
+    workspaces = pd.concat([pd.DataFrame({"path": [ws_path]}), workspaces], ignore_index=True)
+    workspaces.dropna()
+    workspaces.to_csv(str(sys.argv[1]+"/.workspaces"),index=False)
+    load_ws()
 
 
 # Create variables
@@ -644,6 +690,7 @@ median1_legend=StringVar()
 median2_legend=StringVar()
 background_legend=StringVar()
 sigma_label=StringVar(value="\u03c3 = ")
+workspaces = None
 
 # add menubar at the top of the window
 menu = tk.Menu(root) 
@@ -652,8 +699,12 @@ filemenu = tk.Menu(menu)
 # add menu for file selection
 menu.add_cascade(label="File", menu=filemenu)
 filemenu.add_command(label="Open CSV", command=choose_csv_file)
-# recent_files_menu = tk.Menu(filemenu)
-# filemenu.add_cascade(label="Open Recent", menu=recent_files_menu) #TODO: file history
+recent_files_menu = tk.Menu(filemenu)
+filemenu.add_cascade(label="Open Recent", menu=recent_files_menu) #TODO: file history
+filemenu.add_separator()
+filemenu.add_command(label="Open Directory", command=choose_file_path)
+recent_file_paths = tk.Menu(filemenu)
+filemenu.add_cascade(label="Open Recent Workspace", menu=recent_file_paths) #TODO: workspace history
 filemenu.add_separator()
 filemenu.add_command(label="Load Dwelltimes", command=choose_dt_file)
 filemenu.add_separator()
@@ -663,6 +714,8 @@ filemenu.add_command(label="Exit", command=root.destroy)
 helpmenu = tk.Menu(menu)
 menu.add_cascade(label="Help", menu=helpmenu)
 helpmenu.add_command(label="About", command=show_info)
+load_ws()
+
 
 
 choose_file_button = tk.Button(root, text="Choose CSV File", command=choose_csv_file)
