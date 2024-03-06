@@ -32,13 +32,17 @@ def format_sci_notation(x, pos):
 # Function to open a CSV file using a dialog
 def open_csv_file():
     global startup # set initial folder to the one passed to spPlot as an argument if given
+    global ws_path
+    global file_path
     #if startup:
-    if startup and len(sys.argv)>=2:
+    if startup and len(sys.argv)>=3:
         try:
-            file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")],initialdir=str(sys.argv[2]))
+            file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")],initialdir=str(sys.argv[3]))
         except:
             print("Invalid argument. Please pass a valid filepath as argument")
         startup = False
+    elif ws_path:
+        file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")],initialdir=ws_path)
     else:
         file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
     if file_path:
@@ -167,7 +171,7 @@ def plot_histogram(data, column_name, initial_params, plot_title, x_label, y_lab
             if(num_peaks==2):
                 initial_params.append([mu_estimate, sigma_estimate, 1.0])
         try:
-            could_not_fit_label.grid_forget()
+            # could_not_fit_label.grid_forget()
             params, _ = curve_fit(sum_of_lognorms, bin_centers, hist, p0=initial_params)
             # Create the fitted curve
             fitted_curve = sum_of_lognorms(curve_x_vals, *params)
@@ -436,6 +440,7 @@ def plot_me():
     if x_label.get() =='' or x_label.get() == "cts / Event":
         x_label.set("Mass / Event / fg")
     process_column(False)
+    write_history()
 
 def save_me():
     global mass
@@ -443,6 +448,7 @@ def save_me():
     if x_label.get() =='' or x_label.get() == "cts / Event":
         x_label.set("Mass / Event / fg")
     process_column(True)
+    write_history()
 
 def toggle_bin_width():
     global bw1_old
@@ -464,20 +470,23 @@ def toggle_bin_width():
 def toggle_params():
     toggle_fit()
     if(num_peaks.get()==2):
-        initial_params2_label.grid(row=20,column=0)
-        initial_params2_entry.grid(row=21,column=0)
+        # initial_params2_label.grid(row=20,column=0)
+        # initial_params2_entry.grid(row=21,column=0)
+        # init_params2_entry.set(initial_params_entry.get())
+        initial_params2_label.config(state="normal")
+        initial_params2_entry.config(state="normal")
         init_params2_entry.set(initial_params_entry.get())
     else:
-        initial_params2_label.grid_forget()
-        initial_params2_entry.grid_forget()
+        initial_params2_label.config(state="disabled")
+        initial_params2_entry.config(state="disabled")
 
 def toggle_broken_axis():
     if broken_scale_toggle.get():
-        y2_min_label.grid(column=3, row=29)
-        y2_min_entry.grid(column=4, row=29)
-        y2_max_label.grid(column=6, row=29)
-        y2_max_entry.grid(column=7, row=29)
-        reset_y2_lims.grid(column=9, row=29)
+        y2_min_label.config(state="normal")
+        y2_min_entry.config(state="normal")
+        y2_max_label.config(state="normal")
+        y2_max_entry.config(state="normal")
+        reset_y2_lims.config(state="normal")
         canvas.get_tk_widget().grid_forget()
         canvas2.get_tk_widget().grid(row=0, column=1, rowspan=25, columnspan=9)
         ax2.spines.bottom.set_visible(False)
@@ -492,11 +501,11 @@ def toggle_broken_axis():
         ax2.plot([0, 1], [0, 0], transform=ax2.transAxes, **kwargs)
         ax1.plot([0, 1], [1, 1], transform=ax1.transAxes, **kwargs)
     else:
-        y2_min_label.grid_forget()
-        y2_min_entry.grid_forget()
-        y2_max_label.grid_forget()
-        y2_max_entry.grid_forget()
-        reset_y2_lims.grid_forget()
+        y2_min_label.config(state="disabled")
+        y2_min_entry.config(state="disabled")
+        y2_max_label.config(state="disabled")
+        y2_max_entry.config(state="disabled")
+        reset_y2_lims.config(state="disabled")
         canvas2.get_tk_widget().grid_forget()
         canvas.get_tk_widget().grid(row=0, column=1, rowspan=25, columnspan=9)
 
@@ -516,71 +525,136 @@ def reset_labels():
 
 def toggle_fit():
     if fit.get():
-        plot_curve_checkbox.grid(row=1, rowspan=2, column=plot_options_column)
-        curve_label.grid(row=1,column=plot_options_column+1)
-        curve_title.grid(row=2,column=plot_options_column+1)
+        plot_curve_checkbox.config(state="normal")
+        curve_title.config(state="normal")
+        curve_label.config(state="normal")
         plot_curve_toggle.set(True)
         if num_peaks.get() == 2:
-            plot_peak1_checkbox.grid(row=3, rowspan=2, column=plot_options_column)
-            peak1_label.grid(row=3,column=plot_options_column+1)
-            peak1_title.grid(row=4,column=plot_options_column+1)
+            plot_peak1_checkbox.config(state="normal")
+            plot_peak2_checkbox.config(state="normal")
+            plot_median1_checkbox.config(state="normal")
+            plot_median2_checkbox.config(state="normal")
+            peak1_title.config(state="normal")
+            peak2_title.config(state="normal")
+            median1_title.config(state="normal")
+            median2_title.config(state="normal")
+            peak1_label.config(state="normal")
+            peak2_label.config(state="normal")
+            median1_label.config(state="normal")
+            median2_label.config(state="normal")
             plot_peak1_toggle.set(True)
-            plot_peak2_checkbox.grid(row=5, rowspan=2, column=plot_options_column)
-            peak2_label.grid(row=5,column=plot_options_column+1)
-            peak2_title.grid(row=6,column=plot_options_column+1)
             plot_peak2_toggle.set(True)
-            plot_median1_checkbox.grid(row=9, rowspan=2, column=plot_options_column)
-            median1_label.grid(row=9,column=plot_options_column+1)
-            median1_title.grid(row=10,column=plot_options_column+1)
             plot_median1_toggle.set(True)
-            plot_median2_checkbox.grid(row=11, rowspan=2, column=plot_options_column)
-            median2_label.grid(row=11,column=plot_options_column+1)
-            median2_title.grid(row=12,column=plot_options_column+1)
             plot_median2_toggle.set(True)
         else:    
-            plot_peak1_checkbox.grid_forget()
-            peak1_label.grid_forget()
-            peak1_title.grid_forget()
+            plot_peak1_checkbox.config(state="disabled")
+            plot_peak2_checkbox.config(state="disabled")
+            plot_median1_checkbox.config(state="disabled")
+            plot_median2_checkbox.config(state="disabled")
+            peak1_title.config(state="disabled")
+            peak2_title.config(state="disabled")
+            median1_title.config(state="disabled")
+            median2_title.config(state="disabled")
+            peak1_label.config(state="disabled")
+            peak2_label.config(state="disabled")
+            median1_label.config(state="disabled")
+            median2_label.config(state="disabled")
             plot_peak1_toggle.set(False)
-            plot_peak2_checkbox.grid_forget()
-            peak2_label.grid_forget()
-            peak2_title.grid_forget()
             plot_peak2_toggle.set(False)
-            plot_median1_checkbox.grid_forget()
-            median1_label.grid_forget()
-            median1_title.grid_forget()
             plot_median1_toggle.set(False)
-            plot_median2_checkbox.grid_forget()
-            median2_label.grid_forget()
-            median2_title.grid_forget()
             plot_median2_toggle.set(False)
     else:
-        plot_curve_checkbox.grid_forget()
-        curve_label.grid_forget()
-        curve_title.grid_forget()
+        plot_curve_checkbox.config(state="disabled")
+        plot_peak1_checkbox.config(state="disabled")
+        plot_peak2_checkbox.config(state="disabled")
+        plot_median1_checkbox.config(state="disabled")
+        plot_median2_checkbox.config(state="disabled")
+        curve_title.config(state="disabled")
+        peak1_title.config(state="disabled")
+        peak2_title.config(state="disabled")
+        median1_title.config(state="disabled")
+        median2_title.config(state="disabled")
+        curve_label.config(state="disabled")
+        peak1_label.config(state="disabled")
+        peak2_label.config(state="disabled")
+        median1_label.config(state="disabled")
+        median2_label.config(state="disabled")
         plot_curve_toggle.set(False)
-        plot_peak1_checkbox.grid_forget()
-        peak1_label.grid_forget()
-        peak1_title.grid_forget()
         plot_peak1_toggle.set(False)
-        plot_peak2_checkbox.grid_forget()
-        peak2_label.grid_forget()
-        peak2_title.grid_forget()
         plot_peak2_toggle.set(False)
-        plot_median1_checkbox.grid_forget()
-        median1_label.grid_forget()
-        median1_title.grid_forget()
         plot_median1_toggle.set(False)
-        plot_median2_checkbox.grid_forget()
-        median2_label.grid_forget()
-        median2_title.grid_forget()
         plot_median2_toggle.set(False)
+
+def show_info():
+    errormsg_window("spPlot v0.5\nFor more information about this project,\nvisit https://github.com/IOKrI/spPlot")
+
+def add_history_entry():
+    global filename
+    entry = [filename.get,plot_title.get(),x_label.get(),y_label.get(),selected_column.get(),background_column.get(),fit.get(),num_peaks.get(),init_params_entry.get(),init_params2_entry.get(),skip_rows_toggle.get(),broken_scale_toggle.get(),x_min.get(),x_max.get(),y_min.get(),y_max.get(),y2_min.get(),y2_max.get(),bin_width1.get(),bin_width2.get(),dwelltime.get(),transport_entry.get(),flow_entry.get(),pitch_entry.get()]
+    if history['filename'].query(filename.get()):
+        return
+    else:
+        history.add(entry)
+
+
+def load_history(path):
+    global history
+    try:
+        history = pd.read_csv(str(path + ".history"))
+    except:
+        history = pd.DataFrame(columns=['filename','plot_title','x_label','y_label','selected_column','background_column','fit','second_fit','fit1_param','fit2_param','skip_rows','broken_scale','x_min','x_max','y_min','y_max','y2_min','y2_max','binwidth1','binwidth2','dwelltime','transeff','v_flow','calpitch'])
+
+
+def write_history(path):
+    global history
+    global workspaces
+    history.to_csv(str(path + ".history"))
+    workspaces.to_csv(str(sys.argv[2] + ".workspaces"))
+
+def choose_file_path():
+    global ws_path
+    tmp = filedialog.askdirectory()
+    if tmp != "" and tmp is not None:
+        print(tmp)
+        ws_path = tmp
+        update_ws_paths()
+
+def load_ws():
+    recent_file_paths.delete(0, 'end')
+    global workspaces
+    if workspaces is None:
+        try:
+            workspaces = pd.read_csv(str(sys.argv[1] + "/.workspaces"))
+        except:
+            workspaces = pd.DataFrame({'path':[]})
+            workspaces.to_csv(str(sys.argv[1] + "/.workspaces"),index=False)
+    for ind in workspaces.index:
+        recent_file_paths.add_command(label=workspaces['path'][ind], command=lambda p=workspaces['path'][ind]:set_dir_path(p))
+
+def set_dir_path(ws):
+    print(ws)
+    global ws_path
+    global startup
+    startup = False
+    ws_path = ws
+    update_ws_paths()
+
+def update_ws_paths():
+    global workspaces
+    global ws_path
+    if workspaces["path"].eq(ws_path).any():
+        workspaces = workspaces[workspaces["path"] != ws_path]
+    workspaces = pd.concat([pd.DataFrame({"path": [ws_path]}), workspaces], ignore_index=True)
+    workspaces.dropna()
+    workspaces.to_csv(str(sys.argv[1]+"/.workspaces"),index=False)
+    load_ws()
 
 
 # Create variables
 startup = True
 data = None
 dt_data = None
+history = None
 filename = StringVar()
 plot_title = StringVar()
 log_scale_toggle = BooleanVar()
@@ -616,6 +690,33 @@ median1_legend=StringVar()
 median2_legend=StringVar()
 background_legend=StringVar()
 sigma_label=StringVar(value="\u03c3 = ")
+workspaces = None
+
+# add menubar at the top of the window
+menu = tk.Menu(root) 
+root.config(menu=menu)
+filemenu = tk.Menu(menu)
+# add menu for file selection
+menu.add_cascade(label="File", menu=filemenu)
+filemenu.add_command(label="Open CSV", command=choose_csv_file)
+recent_files_menu = tk.Menu(filemenu)
+filemenu.add_cascade(label="Open Recent", menu=recent_files_menu) #TODO: file history
+filemenu.add_separator()
+filemenu.add_command(label="Open Directory", command=choose_file_path)
+recent_file_paths = tk.Menu(filemenu)
+filemenu.add_cascade(label="Open Recent Workspace", menu=recent_file_paths) #TODO: workspace history
+filemenu.add_separator()
+filemenu.add_command(label="Load Dwelltimes", command=choose_dt_file)
+filemenu.add_separator()
+# filemenu.add_command(label="Open Directory") #TODO
+filemenu.add_command(label="Exit", command=root.destroy)
+# add helpmenu
+helpmenu = tk.Menu(menu)
+menu.add_cascade(label="Help", menu=helpmenu)
+helpmenu.add_command(label="About", command=show_info)
+load_ws()
+
+
 
 choose_file_button = tk.Button(root, text="Choose CSV File", command=choose_csv_file)
 skiprows_checkbox = tk.Checkbutton(root, text="Skip first Rows", variable=skip_rows_toggle, onvalue=True, offvalue=False)
@@ -630,12 +731,10 @@ selected_column.trace("w",set_lims)
 background_checkbox = tk.Checkbutton(root, text="Plot Background", variable=plot_background_toggle, onvalue=True, offvalue=False)
 background_dropdown = OptionMenu(root, background_column, "")
 
-initial_params_label = tk.Label(root, text="Initial Parameters (mu, sigma, weight; comma-separated):")
+initial_params_label = tk.Label(root, text="Initial Parameters\n(mu, sigma, weight; comma-separated):")
 initial_params_entry = Entry(root, textvariable=init_params_entry)
-initial_params2_label = tk.Label(root, text="Initial Parameters 2 (mu, sigma, weight; comma-separated):")
-initial_params2_entry = Entry(root, textvariable=init_params2_entry)
-initial_params2_label.pack_forget()
-initial_params2_entry.pack_forget()
+initial_params2_label = tk.Label(root, text="Initial Parameters 2\n(mu, sigma, weight; comma-separated):", state="disabled")
+initial_params2_entry = Entry(root, textvariable=init_params2_entry, state="disabled")
 reset_initial_params = tk.Button(root, text="Reset fit parameters", command=reset_fit_params)
 
 plot_title_label = tk.Label(root, text="Plot Title:")
@@ -705,47 +804,47 @@ y_min_entry = Entry(root, textvariable=y_min)
 y_max_label = tk.Label(root, text="Y max:")
 y_max_entry = Entry(root, textvariable=y_max)
 reset_y_lims = tk.Button(root, text="Reset Y Limits", command=set_y_lims)
-y2_min_label = tk.Label(root, text="Y min:")
-y2_min_entry = Entry(root, textvariable=y2_min)
-y2_max_label = tk.Label(root, text="Y max:")
-y2_max_entry = Entry(root, textvariable=y2_max)
-reset_y2_lims = tk.Button(root, text="Reset Y2 Limits", command=set_y2_lims)
+y2_min_label = tk.Label(root, text="Y min:", state="disabled")
+y2_min_entry = Entry(root, textvariable=y2_min, state="disabled")
+y2_max_label = tk.Label(root, text="Y max:", state="disabled")
+y2_max_entry = Entry(root, textvariable=y2_max, state="disabled")
+reset_y2_lims = tk.Button(root, text="Reset Y2 Limits", command=set_y2_lims, state="disabled")
 
 # Checkboxes for element selection
 plot_histogram_toggle = tk.BooleanVar(value=True)
-plot_histogram_checkbox = tk.Checkbutton(root, text="Plot Histogram", variable=plot_histogram_toggle, onvalue=True, offvalue=False, state="active")
+plot_histogram_checkbox = tk.Checkbutton(root, text="Plot Histogram", variable=plot_histogram_toggle, onvalue=True, offvalue=False, state="normal")
 histogram_title = tk.Label(root, text="Histogram Label")
 histogram_label = tk.Entry(root, textvariable=histogram_legend)
 
-plot_curve_toggle = tk.BooleanVar(value=True)
-plot_curve_checkbox = tk.Checkbutton(root, text="Plot Fitted Curve", variable=plot_curve_toggle, onvalue=True, offvalue=False)
-curve_title = tk.Label(root, text="Curve Label")
-curve_label = tk.Entry(root, textvariable=curve_legend)
+plot_curve_toggle = tk.BooleanVar(value=False)
+plot_curve_checkbox = tk.Checkbutton(root, text="Plot Fitted Curve", variable=plot_curve_toggle, onvalue=True, offvalue=False, state="disabled")
+curve_title = tk.Label(root, text="Curve Label", state="disabled")
+curve_label = tk.Entry(root, textvariable=curve_legend, state="disabled")
 
-plot_median_toggle = tk.BooleanVar(value=True)
+plot_median_toggle = tk.BooleanVar(value=False)
 plot_median_checkbox = tk.Checkbutton(root, text="Plot Median", variable=plot_median_toggle, onvalue=True, offvalue=False)
 median_title = tk.Label(root, text="Median Label")
 median_label = tk.Entry(root, textvariable=median_legend)
 
-plot_peak1_toggle = tk.BooleanVar(value=True)
-plot_peak1_checkbox = tk.Checkbutton(root, text="Plot Peak 1", variable=plot_peak1_toggle, onvalue=True, offvalue=False)
-peak1_title = tk.Label(root, text="Curve1 Label")
-peak1_label = tk.Entry(root, textvariable=peak1_legend)
+plot_peak1_toggle = tk.BooleanVar(value=False)
+plot_peak1_checkbox = tk.Checkbutton(root, text="Plot Peak 1", variable=plot_peak1_toggle, onvalue=True, offvalue=False, state="disabled")
+peak1_title = tk.Label(root, text="Curve1 Label", state="disabled")
+peak1_label = tk.Entry(root, textvariable=peak1_legend, state="disabled")
 
-plot_median1_toggle = tk.BooleanVar(value=True)
-plot_median1_checkbox = tk.Checkbutton(root, text="Plot Median 1", variable=plot_median1_toggle, onvalue=True, offvalue=False)
-median1_title = tk.Label(root, text="Median1 Label")
-median1_label = tk.Entry(root, textvariable=median1_legend)
+plot_median1_toggle = tk.BooleanVar(value=False)
+plot_median1_checkbox = tk.Checkbutton(root, text="Plot Median 1", variable=plot_median1_toggle, onvalue=True, offvalue=False, state="disabled")
+median1_title = tk.Label(root, text="Median1 Label", state="disabled")
+median1_label = tk.Entry(root, textvariable=median1_legend, state="disabled")
 
-plot_peak2_toggle = tk.BooleanVar(value=True)
-plot_peak2_checkbox = tk.Checkbutton(root, text="Plot Peak 2", variable=plot_peak2_toggle, onvalue=True, offvalue=False)
-peak2_title = tk.Label(root, text="Curve2 Label")
-peak2_label = tk.Entry(root, textvariable=peak2_legend)
+plot_peak2_toggle = tk.BooleanVar(value=False)
+plot_peak2_checkbox = tk.Checkbutton(root, text="Plot Peak 2", variable=plot_peak2_toggle, onvalue=True, offvalue=False, state="disabled")
+peak2_title = tk.Label(root, text="Curve2 Label", state="disabled")
+peak2_label = tk.Entry(root, textvariable=peak2_legend, state="disabled")
 
-plot_median2_toggle = tk.BooleanVar(value=True)
-plot_median2_checkbox = tk.Checkbutton(root, text="Plot Median 2", variable=plot_median2_toggle, onvalue=True, offvalue=False)
-median2_title = tk.Label(root, text="Median2 Label")
-median2_label = tk.Entry(root, textvariable=median2_legend)
+plot_median2_toggle = tk.BooleanVar(value=False)
+plot_median2_checkbox = tk.Checkbutton(root, text="Plot Median 2", variable=plot_median2_toggle, onvalue=True, offvalue=False, state="disabled")
+median2_title = tk.Label(root, text="Median2 Label", state="disabled")
+median2_label = tk.Entry(root, textvariable=median2_legend, state="disabled")
 
 plot_background_toggle = tk.BooleanVar()
 plot_background_checkbox = tk.Checkbutton(root, text="Plot Background", variable=plot_background_toggle, onvalue=True, offvalue=False)
@@ -758,8 +857,8 @@ reset_labels_button = tk.Button(root, text="Reset Labels", command=reset_labels)
 sigma_field = tk.Entry(root, textvariable=sigma_label, state="readonly")
 
 # Place elements in the window
-choose_file_button.grid(row=0,column=0)
-skiprows_checkbox.grid(row=1, column=0)
+# choose_file_button.grid(row=0,column=0)
+# skiprows_checkbox.grid(row=1, column=0)
 column_dropdown.grid(row=2,column=0)
 plot_title_label.grid(row=3,column=0)
 plot_title_entry.grid(row=4,column=0)
@@ -778,6 +877,8 @@ initial_params_label.grid(row=17,column=0)
 initial_params_entry.grid(row=18,column=0)
 second_log.grid(row=19,column=0)
 reset_initial_params.grid(row=22,column=0)
+initial_params2_label.grid(row=20,column=0)
+initial_params2_entry.grid(row=21,column=0)
 
 choose_dt_file_button.grid(row=0,column=10)
 dwelltime_label.grid(row=1,column=10)
@@ -809,6 +910,23 @@ toggle_broken_axis_button.grid(column=3, row=28)
 
 plot_options_column = 11  # Adjust the column number as needed, depending on width of the pyplot figure
 
+
+plot_curve_checkbox.grid(row=1, rowspan=2, column=plot_options_column)
+curve_label.grid(row=1,column=plot_options_column+1)
+curve_title.grid(row=2,column=plot_options_column+1)
+plot_peak1_checkbox.grid(row=3, rowspan=2, column=plot_options_column)
+peak1_label.grid(row=3,column=plot_options_column+1)
+peak1_title.grid(row=4,column=plot_options_column+1)
+plot_peak2_checkbox.grid(row=5, rowspan=2, column=plot_options_column)
+peak2_label.grid(row=5,column=plot_options_column+1)
+peak2_title.grid(row=6,column=plot_options_column+1)
+plot_median1_checkbox.grid(row=9, rowspan=2, column=plot_options_column)
+median1_label.grid(row=9,column=plot_options_column+1)
+median1_title.grid(row=10,column=plot_options_column+1)
+plot_median2_checkbox.grid(row=11, rowspan=2, column=plot_options_column)
+median2_label.grid(row=11,column=plot_options_column+1)
+median2_title.grid(row=12,column=plot_options_column+1)
+
 reset_labels_button.grid(row=0, column=plot_options_column, columnspan=2)
 # plot_curve_checkbox.grid(row=1, rowspan=2, column=plot_options_column)
 # curve_label.grid(row=1,column=plot_options_column+1)
@@ -835,6 +953,12 @@ plot_background_checkbox.grid(row=15, rowspan=2, column=plot_options_column)
 background_label.grid(row=15,column=plot_options_column+1)
 background_title.grid(row=16,column=plot_options_column+1)
 background_dropdown.grid(row=17, column=plot_options_column, columnspan=2)
+
+y2_min_label.grid(column=3, row=29)
+y2_min_entry.grid(column=4, row=29)
+y2_max_label.grid(column=6, row=29)
+y2_max_entry.grid(column=7, row=29)
+reset_y2_lims.grid(column=9, row=29)
 
 root.mainloop()
 
